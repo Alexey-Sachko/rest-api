@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-//import product from '../models/product';
 import convert from 'koa-convert';
 import KoaBody from 'koa-body';
 import { ObjectId } from "mongodb";
@@ -9,7 +8,7 @@ koaBody = convert(KoaBody());
 
 router
   .get('/users', async (ctx, next) => {
-      ctx.body = await ctx.app.users.find().toArray();
+      ctx.body = await ctx.app.User.find({});
   })
 
   .get('/users/:id', async (ctx, next) => {
@@ -23,19 +22,38 @@ router
   })
 
   .post('/users', koaBody, async (ctx, next) => {
+      const { User } = ctx.app;
+      const { name, password } = ctx.request.body;
+      const user = new User({ name, password });
+    
       ctx.status = 201;
-      ctx.body = await ctx.app.users.insertOne(ctx.request.body);
+      ctx.body = await user.save()
+        .then((res) => {
+            return res;
+        })
   })
 
-//   .put('/product/:id', koaBody, async (ctx, next) => {
-//       ctx.status = 204;
-//       await product.update(ctx.params.id, ctx.request.body);
-//   })
+  .delete('/users/:id', async (ctx, next) => {
+      const id = new ObjectId(ctx.params.id);
+      ctx.body = await ctx.app.User.remove({ _id: id })
+        .then((res) => {
+            return res.value
+        })
+  })
 
-//   .delete('/product/:id', async (ctx, next) => {
-//       ctx.status = 204;
-//       await product.delete(ctx.params.id);
-//   });
+  .put('/users/:id', koaBody, async (ctx, next) => {
+      ctx.status = 201;
+      const id = new ObjectId(ctx.params.id);
+      const { body } = ctx.request;
+      const userName = body.name;
+      const userPassword = body.password;
+
+      ctx.body = await ctx.app.users
+        .findOneAndUpdate({ _id: id }, { $set: { password: userPassword, name: userName } }, { returnOriginal: false })
+        .then((res) => {
+            return res.value
+        })
+  })
 
 export function routes () { return router.routes() }
 export function allowedMethods () { return router.allowedMethods() }

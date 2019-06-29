@@ -1,26 +1,24 @@
 import MongoClient from 'mongodb';
+import mongoose from 'mongoose';
 
-const MONGO_URL = "mongodb://localhost:27017";
+const MONGO_URL = "mongodb://localhost:27017/test";
+const Schema = mongoose.Schema;
+
+const userScheme = new Schema({
+  name: { type: String, unique: true },
+  password: String
+}, {versionKey: false});
 
 function connectMongodb(app) {
-  //MongoClient.connect(MONGO_URL)
-      // .then((connection) => {
-      //     console.log(connection);
-      //     app.people = connection.collection("people");
-      //     console.log("Database connection established")
-      // })
-      // .catch((err) => console.error(err))
-
-  
-    MongoClient.connect(MONGO_URL, { useNewUrlParser: true }, (err, client) => {
+  mongoose.connect(MONGO_URL, { useNewUrlParser: true }, (err, client) => {
     if(err) {
       console.error(err);
     } else {
-      const db = client.db('test');
-      app.users = db.collection("users");
-      
+
+      app.User = mongoose.model("User", userScheme);   
+
       process.on("SIGINT", () => {
-        MongoClient.close();
+        mongoose.disconnect();
         process.exit();
       });
     }
